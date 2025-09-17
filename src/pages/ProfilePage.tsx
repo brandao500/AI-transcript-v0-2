@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { User, CreditCard, History, Settings, Mail, Lock } from 'lucide-react';
+import { User, CreditCard, History, Settings, Mail, Lock, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const menuItems = [
   { id: 'account', label: 'Account Information', icon: <User className="h-4 w-4" /> },
@@ -12,12 +13,24 @@ const menuItems = [
 ];
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
+  const navigate = useNavigate();
 
   const handleResetPassword = () => {
     // Add password reset logic here
     toast.success('Password reset link sent to your email');
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/');
+      toast.success('Successfully signed out');
+    } catch (error) {
+      console.error('Failed to sign out', error);
+      toast.error('Failed to sign out. Please try again.');
+    }
   };
 
   return (
@@ -26,8 +39,8 @@ export default function ProfilePage() {
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* Sidebar Navigation */}
-        <div className="w-full md:w-64 flex-shrink-0">
-          <nav className="space-y-1">
+        <div className="w-full md:w-64 flex-shrink-0 flex flex-col">
+          <nav className="space-y-1 flex-1">
             {menuItems.map((item) => (
               <button
                 key={item.id}
@@ -43,6 +56,15 @@ export default function ProfilePage() {
               </button>
             ))}
           </nav>
+          
+          {/* Log Out Button */}
+          <button
+            onClick={handleSignOut}
+            className="flex items-center w-full px-4 py-3 text-sm font-medium text-red-600 rounded-md hover:bg-red-50 mt-2"
+          >
+            <LogOut className="h-4 w-4 mr-3" />
+            Sign Out
+          </button>
         </div>
 
         {/* Main Content */}

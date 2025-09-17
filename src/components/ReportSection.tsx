@@ -1,9 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Download, Copy, CheckCircle, BookOpen, Lightbulb, ChevronDown, ChevronUp, FileText, FileDown, Zap, Brain, Info, Book, Pencil, HelpCircle } from "lucide-react";
+import { Download, Copy, CheckCircle, BookOpen, Lightbulb, ChevronDown, ChevronUp, FileText, FileDown, Zap, Brain, Info, Book, Pencil, HelpCircle, Languages, Loader2 } from "lucide-react";
 import { useState, useCallback } from "react";
 import { exportToPdf, exportToDocx } from "@/lib/exportUtils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+
+const LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Español' },
+  { code: 'fr', name: 'Français' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'it', name: 'Italiano' },
+];
 
 export interface KeyConcept {
   title: string;
@@ -66,6 +75,8 @@ interface ReportSectionProps {
 
 export function ReportSection({ analysisResult, onExport }: ReportSectionProps) {
   const [copied, setCopied] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedResult, setTranslatedResult] = useState<AnalysisResult | null>(null);
   const [openSections, setOpenSections] = useState({
     keyConcepts: true,
     mainPoints: true,
@@ -169,6 +180,42 @@ export function ReportSection({ analysisResult, onExport }: ReportSectionProps) 
       exportToDocx(analysisResult, `analise-${new Date().toISOString().split('T')[0]}`);
     } else {
       onExport(format);
+    }
+  };
+
+  const handleTranslate = async (targetLang: string) => {
+    if (targetLang === 'pt') {
+      setTranslatedResult(null);
+      return;
+    }
+    
+    setIsTranslating(true);
+    try {
+      // In a real app, you would call your translation API here
+      // For now, we'll just simulate a translation by adding a prefix
+      const translated = JSON.parse(JSON.stringify(analysisResult));
+      
+      // Translate the main content
+      if (translated.summary.executiveSummary) {
+        translated.summary.executiveSummary = `[${targetLang.toUpperCase()}] ${translated.summary.executiveSummary}`;
+      }
+      
+      // Add more translation logic for other fields as needed
+      
+      setTranslatedResult(translated);
+      // toast({
+      //   title: `Traduzido para ${LANGUAGES.find(lang => lang.code === targetLang)?.name || targetLang}`,
+      //   description: "A análise foi traduzida com sucesso.",
+      // });
+    } catch (error) {
+      console.error("Translation error:", error);
+      // toast({
+      //   title: "Erro na tradução",
+      //   description: "Não foi possível traduzir a análise. Tente novamente.",
+      //   variant: "destructive",
+      // });
+    } finally {
+      setIsTranslating(false);
     }
   };
 
@@ -343,58 +390,276 @@ export function ReportSection({ analysisResult, onExport }: ReportSectionProps) 
     );
   };
 
+  const renderReportContent = (data: AnalysisResult) => (
+    <>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          Relatório de Análise
+        </h2>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="hidden md:inline">{new Date().toLocaleDateString('pt-BR', { 
+            day: '2-digit', 
+            month: 'long', 
+            year: 'numeric' 
+          })}</span>
+          <div className="h-1 w-1 rounded-full bg-muted-foreground/50"></div>
+          <span>{data.summary.metadata.wordCount} palavras</span>
+        </div>
+      </div>
+
+      {/* Resumo Executivo */}
+      <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <CardHeader 
+          className="bg-gradient-to-r from-primary/5 to-primary/10 p-6"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <BookOpen className="h-5 w-5 text-primary" />
+            </div>
+            <CardTitle className="text-lg font-semibold">Resumo Executivo</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="prose prose-sm max-w-none text-muted-foreground">
+            {data.summary.executiveSummary.split('\n').map((paragraph, i) => (
+              <p key={i} className="mb-4 last:mb-0">{paragraph}</p>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Conceitos Chave */}
+      <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
+        <Collapsible defaultOpen>
+          <div className="p-0">
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center gap-3 p-6">
+                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 transition-colors duration-200 group-hover:bg-amber-200 dark:group-hover:bg-amber-800/40">
+                  <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-400 transition-colors duration-200" />
+                </div>
+                <CardTitle className="text-lg font-semibold">Conceitos Chave</CardTitle>
+              </div>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent>
+            <div className="px-6 pb-6 -mt-2">
+              {renderKeyConcepts()}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
+      {/* Pontos Principais */}
+      <Card className="mt-4 overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
+        <Collapsible defaultOpen>
+          <div className="p-0">
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center gap-3 p-6">
+                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 transition-colors duration-200 group-hover:bg-purple-200 dark:group-hover:bg-purple-800/40">
+                  <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400 transition-colors duration-200" />
+                </div>
+                <CardTitle className="text-lg font-semibold">Pontos Principais</CardTitle>
+              </div>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent>
+            <div className="px-6 pb-6 -mt-2">
+              {renderMainPoints()}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
+      {/* Contextos Importantes */}
+      <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
+        <Collapsible defaultOpen>
+          <div className="p-0">
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center gap-3 p-6">
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 transition-colors duration-200 group-hover:bg-blue-200 dark:group-hover:bg-blue-800/40">
+                  <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 transition-colors duration-200" />
+                </div>
+                <CardTitle className="text-lg font-semibold">{data.summary.importantContexts.title}</CardTitle>
+              </div>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent>
+            <div className="px-6 pb-6 -mt-2">
+              {renderImportantContexts()}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
+      {/* Estrutura de Aprendizado */}
+      <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
+        <Collapsible defaultOpen>
+          <div className="p-0">
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center gap-3 p-6">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 transition-colors duration-200 group-hover:bg-green-200 dark:group-hover:bg-green-800/40">
+                  <Book className="h-5 w-5 text-green-600 dark:text-green-400 transition-colors duration-200" />
+                </div>
+                <CardTitle className="text-lg font-semibold">Estrutura de Aprendizado</CardTitle>
+              </div>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent>
+            <div className="px-6 pb-6 -mt-2">
+              {renderLearningStructure()}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
+      {/* Técnicas de Estudo */}
+      <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
+        <Collapsible defaultOpen>
+          <div className="p-0">
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center gap-3 p-6">
+                <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 transition-colors duration-200 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-800/40">
+                  <Pencil className="h-5 w-5 text-yellow-600 dark:text-yellow-400 transition-colors duration-200" />
+                </div>
+                <CardTitle className="text-lg font-semibold">Técnicas de Estudo</CardTitle>
+              </div>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent>
+            <div className="px-6 pb-6 -mt-2">
+              {renderStudyTechniques()}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
+      {/* Perguntas de Estudo */}
+      <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
+        <Collapsible defaultOpen>
+          <div className="p-0">
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center gap-3 p-6">
+                <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 transition-colors duration-200 group-hover:bg-red-200 dark:group-hover:bg-red-800/40">
+                  <HelpCircle className="h-5 w-5 text-red-600 dark:text-red-400 transition-colors duration-200" />
+                </div>
+                <CardTitle className="text-lg font-semibold">Perguntas de Estudo</CardTitle>
+              </div>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent>
+            <div className="px-6 pb-6 -mt-2">
+              {renderStudyQuestions()}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
+      {/* Informações das Notas */}
+      <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
+        <CardHeader>
+          <CardTitle>Informações das Notas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {renderMetadata()}
+        </CardContent>
+      </Card>
+    </>
+  );
+
   return (
     <div className="space-y-6">
-      {/* Export Buttons */}
-      <div className="flex flex-wrap gap-3 mb-6 p-4 bg-muted/30 rounded-lg border">
-        <div className="flex flex-wrap gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => handleExport('text')}
-            className="flex items-center gap-2 bg-background hover:bg-muted/50 transition-all duration-200"
-          >
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Exportar TXT</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => handleExport('json')}
-            className="flex items-center gap-2 bg-background hover:bg-muted/50 transition-all duration-200"
-          >
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Exportar JSON</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => handleExport('pdf')}
-            className="flex items-center gap-2 bg-background hover:bg-muted/50 transition-all duration-200"
-          >
-            <FileDown className="h-4 w-4" />
-            <span className="hidden sm:inline">Exportar PDF</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => handleExport('docx')}
-            className="flex items-center gap-2 bg-background hover:bg-muted/50 transition-all duration-200"
-          >
-            <FileDown className="h-4 w-4" />
-            <span className="hidden sm:inline">Exportar DOCX</span>
-          </Button>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-2 justify-end">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => onExport('text')}
+          className="flex items-center gap-2"
+        >
+          <FileText className="h-4 w-4" />
+          <span>Exportar TXT</span>
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => onExport('json')}
+          className="flex items-center gap-2"
+        >
+          <FileText className="h-4 w-4" />
+          <span>Exportar JSON</span>
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => onExport('pdf')}
+          className="flex items-center gap-2"
+        >
+          <FileDown className="h-4 w-4" />
+          <span>Exportar PDF</span>
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => onExport('docx')}
+          className="flex items-center gap-2"
+        >
+          <FileDown className="h-4 w-4" />
+          <span>Exportar DOCX</span>
+        </Button>
+        
+        {/* Add the translation dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              disabled={isTranslating}
+              className="flex items-center gap-2"
+            >
+              {isTranslating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Traduzindo...</span>
+                </>
+              ) : (
+                <>
+                  <Languages className="h-4 w-4" />
+                  <span>Traduzir</span>
+                </>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-white dark:bg-gray-800" align="end">
+            <DropdownMenuItem 
+              onClick={() => handleTranslate('pt')}
+              disabled={isTranslating || !translatedResult}
+            >
+              Português (Original)
+            </DropdownMenuItem>
+            {LANGUAGES.map((language) => (
+              <DropdownMenuItem 
+                key={language.code}
+                onClick={() => handleTranslate(language.code)}
+                disabled={isTranslating}
+              >
+                {language.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
         <Button 
           variant="outline" 
           size="sm" 
           onClick={handleCopyToClipboard}
-          className="flex items-center gap-2 bg-background hover:bg-muted/50 transition-all duration-200 ml-auto"
+          disabled={copied}
+          className="flex items-center gap-2"
         >
           {copied ? (
             <>
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="hidden sm:inline">Copiado!</span>
+              <span>Copiado!</span>
             </>
           ) : (
             <>
@@ -405,179 +670,9 @@ export function ReportSection({ analysisResult, onExport }: ReportSectionProps) 
         </Button>
       </div>
       
+      {/* Update the report content to use translatedResult if available */}
       <div id="report-content" className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Relatório de Análise
-          </h2>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="hidden md:inline">{new Date().toLocaleDateString('pt-BR', { 
-              day: '2-digit', 
-              month: 'long', 
-              year: 'numeric' 
-            })}</span>
-            <div className="h-1 w-1 rounded-full bg-muted-foreground/50"></div>
-            <span>{analysisResult.summary.metadata.wordCount} palavras</span>
-          </div>
-        </div>
-
-        {/* Resumo Executivo */}
-        <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-shadow duration-200">
-          <CardHeader 
-            className="bg-gradient-to-r from-primary/5 to-primary/10 p-6"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <BookOpen className="h-5 w-5 text-primary" />
-              </div>
-              <CardTitle className="text-lg font-semibold">Resumo Executivo</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="prose prose-sm max-w-none text-muted-foreground">
-              {analysisResult.summary.executiveSummary.split('\n').map((paragraph, i) => (
-                <p key={i} className="mb-4 last:mb-0">{paragraph}</p>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Conceitos Chave */}
-        <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
-          <Collapsible defaultOpen>
-            <div className="p-0">
-              <CollapsibleTrigger className="w-full">
-                <div className="flex items-center gap-3 p-6">
-                  <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 transition-colors duration-200 group-hover:bg-amber-200 dark:group-hover:bg-amber-800/40">
-                    <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-400 transition-colors duration-200" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold">Conceitos Chave</CardTitle>
-                </div>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent>
-              <div className="px-6 pb-6 -mt-2">
-                {renderKeyConcepts()}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Pontos Principais */}
-        <Card className="mt-4 overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
-          <Collapsible defaultOpen>
-            <div className="p-0">
-              <CollapsibleTrigger className="w-full">
-                <div className="flex items-center gap-3 p-6">
-                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 transition-colors duration-200 group-hover:bg-purple-200 dark:group-hover:bg-purple-800/40">
-                    <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400 transition-colors duration-200" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold">Pontos Principais</CardTitle>
-                </div>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent>
-              <div className="px-6 pb-6 -mt-2">
-                {renderMainPoints()}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Contextos Importantes */}
-        <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
-          <Collapsible defaultOpen>
-            <div className="p-0">
-              <CollapsibleTrigger className="w-full">
-                <div className="flex items-center gap-3 p-6">
-                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 transition-colors duration-200 group-hover:bg-blue-200 dark:group-hover:bg-blue-800/40">
-                    <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 transition-colors duration-200" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold">{analysisResult.summary.importantContexts.title}</CardTitle>
-                </div>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent>
-              <div className="px-6 pb-6 -mt-2">
-                {renderImportantContexts()}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Estrutura de Aprendizado */}
-        <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
-          <Collapsible defaultOpen>
-            <div className="p-0">
-              <CollapsibleTrigger className="w-full">
-                <div className="flex items-center gap-3 p-6">
-                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 transition-colors duration-200 group-hover:bg-green-200 dark:group-hover:bg-green-800/40">
-                    <Book className="h-5 w-5 text-green-600 dark:text-green-400 transition-colors duration-200" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold">Estrutura de Aprendizado</CardTitle>
-                </div>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent>
-              <div className="px-6 pb-6 -mt-2">
-                {renderLearningStructure()}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Técnicas de Estudo */}
-        <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
-          <Collapsible defaultOpen>
-            <div className="p-0">
-              <CollapsibleTrigger className="w-full">
-                <div className="flex items-center gap-3 p-6">
-                  <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 transition-colors duration-200 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-800/40">
-                    <Pencil className="h-5 w-5 text-yellow-600 dark:text-yellow-400 transition-colors duration-200" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold">Técnicas de Estudo</CardTitle>
-                </div>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent>
-              <div className="px-6 pb-6 -mt-2">
-                {renderStudyTechniques()}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Perguntas de Estudo */}
-        <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
-          <Collapsible defaultOpen>
-            <div className="p-0">
-              <CollapsibleTrigger className="w-full">
-                <div className="flex items-center gap-3 p-6">
-                  <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 transition-colors duration-200 group-hover:bg-red-200 dark:group-hover:bg-red-800/40">
-                    <HelpCircle className="h-5 w-5 text-red-600 dark:text-red-400 transition-colors duration-200" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold">Perguntas de Estudo</CardTitle>
-                </div>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent>
-              <div className="px-6 pb-6 -mt-2">
-                {renderStudyQuestions()}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Informações das Notas */}
-        <Card className="overflow-hidden border border-muted/50 shadow-sm hover:shadow-md transition-all duration-200">
-          <CardHeader>
-            <CardTitle>Informações das Notas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {renderMetadata()}
-          </CardContent>
-        </Card>
+        {renderReportContent(translatedResult || analysisResult)}
       </div>
     </div>
   );

@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { Play, Menu } from "lucide-react";
+import { Play, Menu, User, User as UserIcon } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -15,10 +18,12 @@ const Header = () => {
             <Play className="w-5 h-5 text-white fill-white" />
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-xl font-bold bg-gradient-youtube bg-clip-text text-transparent">
-              AI YouTube Analyzer
-            </h1>
-            <p className="text-xs text-muted-foreground">Powered by AI</p>
+            <a href="/" className="flex items-center space-x-2">
+              <h1 className="text-xl font-bold bg-gradient-youtube bg-clip-text text-transparent">
+                AI YouTube Analyzer
+              </h1>
+              <p className="text-xs text-muted-foreground">Powered by AI</p>
+            </a>
           </div>
         </div>
 
@@ -62,12 +67,26 @@ const Header = () => {
 
         {/* CTA Buttons */}
         <div className="flex items-center space-x-3">
-          <Button variant="nav" size="sm" className="hidden sm:inline-flex" asChild>
-            <Link to="/login">Login</Link>
-          </Button>
-          <Button variant="youtube" size="sm" asChild>
-            <Link to="/transcricaoAnalise">Começar Agora</Link>
-          </Button>
+          {user ? (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full h-9 w-9"
+              onClick={() => navigate('/conta')}
+              title="Minha Conta"
+            >
+              <UserIcon className="h-5 w-5" />
+            </Button>
+          ) : (
+            <>
+              <Button variant="nav" size="sm" className="hidden sm:inline-flex" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button variant="youtube" size="sm" asChild>
+                <Link to="/transcricaoAnalise">Começar Agora</Link>
+              </Button>
+            </>
+          )}
           
           {/* Mobile Menu Button */}
           <Button
@@ -120,9 +139,23 @@ const Header = () => {
             <a 
               href="/transcricaoAnalise" 
               className="block w-full text-center bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              onClick={() => setIsMenuOpen(false)}
             >
               Comece Agora
             </a>
+            {user && (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start mt-4"
+                onClick={() => {
+                  navigate('/conta');
+                  setIsMenuOpen(false);
+                }}
+              >
+                <UserIcon className="mr-2 h-4 w-4" />
+                Minha Conta
+              </Button>
+            )}
           </nav>
         </div>
       )}

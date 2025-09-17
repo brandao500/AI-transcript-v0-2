@@ -1,21 +1,19 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { 
-  User, 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut as firebaseSignOut,
-  UserCredential,
-  updateProfile as firebaseUpdateProfile,
-  updateEmail,
-  updatePassword,
-  UserInfo
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createContext, useContext, useState, ReactNode } from 'react';
+
+type User = {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+};
 
 type UpdateProfileData = {
   displayName?: string | null;
   photoURL?: string | null;
+};
+
+type UserCredential = {
+  user: User;
 };
 
 type AuthContextType = {
@@ -30,45 +28,58 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const signIn = (email: string, password: string) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  // Mock user data - you can customize this as needed
+  const mockUser: User = {
+    uid: 'mock-user-123',
+    email: 'mock@example.com',
+    displayName: 'Mock User',
+    photoURL: null,
   };
 
-  const signUp = (email: string, password: string) => {
-    return createUserWithEmailAndPassword(auth, email, password);
+  const [user, setUser] = useState<User | null>(mockUser);
+  const [loading, setLoading] = useState(false);
+
+  const signIn = async (email: string, password: string): Promise<UserCredential> => {
+    // Simulate API call with loading state
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Create a user object with the provided email
+    const loggedInUser: User = {
+      uid: `user-${Date.now()}`,
+      email,
+      displayName: email.split('@')[0], // Use the part before @ as display name
+      photoURL: null,
+    };
+    
+    setUser(loggedInUser);
+    setLoading(false);
+    return { user: loggedInUser };
   };
 
-  const signOut = () => {
-    return firebaseSignOut(auth);
+  const signUp = async (email: string, password: string): Promise<UserCredential> => {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setUser(mockUser);
+    return { user: mockUser };
   };
 
-  const updateProfile = async (data: UpdateProfileData) => {
-    if (!auth.currentUser) {
-      throw new Error('Nenhum usuário autenticado');
+  const signOut = async (): Promise<void> => {
+    // Simulate sign out with a small delay
+    await new Promise(resolve => setTimeout(resolve, 200));
+    setUser(null); // This will trigger a re-render and update the UI
+  };
+
+  const updateProfile = async (data: UpdateProfileData): Promise<void> => {
+    // Simulate profile update
+    await new Promise(resolve => setTimeout(resolve, 300));
+    if (user) {
+      setUser({
+        ...user,
+        displayName: data.displayName ?? user.displayName,
+        photoURL: data.photoURL ?? user.photoURL,
+      });
     }
-    
-    await firebaseUpdateProfile(auth.currentUser, {
-      displayName: data.displayName || auth.currentUser.displayName,
-      photoURL: data.photoURL || auth.currentUser.photoURL
-    });
-    
-    // Update local user state
-    setUser({
-      ...auth.currentUser,
-      ...data
-    } as User);
   };
 
   const value = {
@@ -77,12 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signUp,
     signOut,
-    updateProfile
+    updateProfile,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
