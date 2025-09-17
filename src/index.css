@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* YouTube-inspired SaaS Design System - All colors MUST be HSL */
+
+@layer base {
+  :root {
+    /* YouTube Brand Colors */
+    --youtube-red: 0 100% 50%;
+    --youtube-red-dark: 0 85% 45%;
+    --youtube-red-light: 0 90% 60%;
+    --youtube-red-glow: 0 100% 70%;
+    
+    /* Base Colors */
+    --background: 0 0% 99%;
+    --foreground: 0 0% 5%;
+    --muted-background: 0 0% 96%;
+    
+    /* Card System */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 5%;
+    --card-shadow: 0 0% 0%;
+    
+    /* Primary (YouTube Red) */
+    --primary: var(--youtube-red);
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: var(--youtube-red-glow);
+    
+    /* Secondary (Clean Grays) */
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 15%;
+    
+    /* Accent (Sophisticated) */
+    --accent: 220 40% 95%;
+    --accent-foreground: 220 40% 15%;
+    
+    /* Muted */
+    --muted: 0 0% 93%;
+    --muted-foreground: 0 0% 40%;
+    
+    /* Interactive States */
+    --border: 0 0% 90%;
+    --input: 0 0% 97%;
+    --ring: var(--youtube-red);
+    
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Gradients */
+    --gradient-youtube: linear-gradient(135deg, hsl(var(--youtube-red)), hsl(var(--youtube-red-dark)));
+    --gradient-youtube-glow: linear-gradient(135deg, hsl(var(--youtube-red-glow)), hsl(var(--youtube-red)));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(0 0% 97%) 100%);
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(var(--card-shadow) / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(var(--card-shadow) / 0.1), 0 2px 4px -1px hsl(var(--card-shadow) / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(var(--card-shadow) / 0.1), 0 4px 6px -2px hsl(var(--card-shadow) / 0.05);
+    --shadow-glow: 0 0 20px hsl(var(--youtube-red) / 0.3);
+    --shadow-glow-lg: 0 0 40px hsl(var(--youtube-red) / 0.2);
+    
+    /* Animation Timings */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --radius: 0.5rem;
+
+    /* Sidebar Colors (YouTube theme compatible) */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark Theme - YouTube Compatible */
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
+    --muted-background: 0 0% 12%;
+    
+    /* Cards in Dark */
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
+    --card-shadow: 0 0% 0%;
+    
+    /* Primary stays YouTube red */
+    --primary: var(--youtube-red);
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: var(--youtube-red-glow);
+    
+    /* Secondary Dark */
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 85%;
+    
+    /* Accent Dark */
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 85%;
+    
+    /* Muted Dark */
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
+    
+    /* Borders Dark */
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: var(--youtube-red);
+    
+    /* Status Colors Dark */
+    --success: 142 70% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 85% 55%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Dark Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 10%) 0%, hsl(0 0% 8%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 10%), hsl(0 0% 8%));
+    
+    /* Dark Sidebar */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
